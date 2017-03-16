@@ -243,6 +243,9 @@ class vpnFresh():
 
 
 if __name__ == '__main__':
-    tmpobj = vpnFresh("VPN_username", "VPN_pwd", "your_host_passwrd")
+    vpn_username = sys.argv[1]
+    vpn_pwd = sys.argv[2]
+    vpn_host_pwd = sys.argv[3]
+    tmpobj = vpnFresh(vpn_username, vpn_pwd, vpn_host_pwd)
     tmpobj.goFresh()
     pass
