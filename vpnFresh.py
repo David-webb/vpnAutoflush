@@ -181,26 +181,36 @@ class vpnFresh():
         pass
 
 
-    def getVpnMoudle(self):
+    def getVpnMoudle(self, serviceType="PPTP"):
         """ 这是ubnutu下Network Manager VPN配置文件的模板(/etc/NetworkManager/system-connections/) """
-        filePath = os.path.join(self.locfolder, 'VPN_moudle')
+        if serviceType == "PPTP":
+            filename = "VPN_moudle"
+        else:
+            filename = "VPN_moudle_L2TP"
+        filePath = os.path.join(self.locfolder, filename)
         with open(filePath, 'r') as rd:
             moudleText = rd.read()
         return moudleText.strip()
         pass
 
-    def makeVpnConf(self, VpnName, uuid, timestamp, ip, serviceType=None):
+    def makeVpnConf(self, VpnName, uuid, timestamp, ip, serviceType="PPTP"):
         """ 创建VPN账号文件VPNx 保存到路径 /etc/NetworkManager/system-connections/下"""
-        if serviceType == None:
-            serviceType = self.serviceType["PPTP"]
-        moudle_text = self.getVpnMoudle()
-        return moudle_text % (VpnName, uuid, timestamp, serviceType, ip, self.username, self.pwd,)
-        pass
+        saveType = serviceType
+        serviceType = self.serviceType[serviceType]         # 这里需要进行参数有效性验证！！！
+        moudle_text = self.getVpnMoudle(saveType)
+        if saveType == "PPTP":
+            return moudle_text % (VpnName, uuid, timestamp, serviceType, ip, self.username, self.pwd)
+        else:
+            return moudle_text % (VpnName, uuid, timestamp, serviceType, ip, "123456", self.username, ip, self.pwd)
+
 
     def delOldVpnfiles(self):
         filepath = os.path.join(self.VpnConfpath, "VPN*")
         cmd = "echo '%s' | sudo rm %s" % (self.hostRootPwd, filepath)
-        os.system(cmd)
+        try:
+            os.system(cmd)
+        except:
+            print "没有VPN旧文件..."
 
     def flushNetWorkManage(self):
         """ 在系统中添加VPN账号文件后，还要修改文件的权限（为600）并重启NM才能看见新建的VPN """
@@ -230,8 +240,8 @@ class vpnFresh():
         self.delOldVpnfiles()
         # 创建所有的PPTP协议的VPN账号（使用"PPTP_L2TP"下的IP）
         tmpdict = self.fullVpnIpDict()
-        self.createConfFiles(tmpdict,  ["PPTP_L2TP", "VPN_%s", self.serviceType["PPTP"]])
-        self.createConfFiles(tmpdict,  ["PPTP_L2TP", "VPN_L2TP_%s", self.serviceType["L2TP"]])
+        self.createConfFiles(tmpdict,  ["PPTP_L2TP", "VPN_%s", "PPTP"])
+        self.createConfFiles(tmpdict,  ["PPTP_L2TP", "VPN_L2TP_%s", "L2TP"])
         self.flushNetWorkManage()
         pass
 
@@ -246,6 +256,7 @@ if __name__ == '__main__':
     vpn_username = sys.argv[1]
     vpn_pwd = sys.argv[2]
     vpn_host_pwd = sys.argv[3]
+    # print vpn_username, vpn_pwd, vpn_host_pwd
     tmpobj = vpnFresh(vpn_username, vpn_pwd, vpn_host_pwd)
     tmpobj.goFresh()
     pass
