@@ -1,5 +1,4 @@
-    + 需要改进: 将root密码的输入设成可选
-rk-Manager VPN批量添加账号的脚本
+## ubuntu14.04 Network-Manager VPN批量添加账号的脚本
 1. 程序流程: 
 
     + 先爬取vpn信息主页（主页内容是文本）
