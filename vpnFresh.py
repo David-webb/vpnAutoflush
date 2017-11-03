@@ -9,6 +9,7 @@ import re
 import codecs
 import os
 import sys
+import chardet 
 
 class vpnFresh():
     """
@@ -85,7 +86,15 @@ class vpnFresh():
 
         for line in vpnpagelist:
             line = line.strip()
-            line = line.decode('utf-8')
+	    """
+	    try:
+
+            	line = line.decode('utf-8')
+	    except Exception as e:
+		print line.decode('ascii')
+		print chardet.detect(line)
+		print e
+	    """
             if self.prejudge(line):                     # 如果当前行是空行， 或者是分割符号"---", 直接跳过
                 continue
             elif self.is_strContainChinese(line):       # 如果当前行包含中文，则在说明区，累积到tmpstr
@@ -193,7 +202,7 @@ class vpnFresh():
         return moudleText.strip()
         pass
 
-    def makeVpnConf(self, VpnName, uuid, timestamp, ip, serviceType="PPTP"):
+    def makeVpnConf(self, VpnName, uuid, timestamp, ip, serviceType="PPTP", shareKey="666888"):
         """ 创建VPN账号文件VPNx 保存到路径 /etc/NetworkManager/system-connections/下"""
         saveType = serviceType
         serviceType = self.serviceType[serviceType]         # 这里需要进行参数有效性验证！！！
@@ -201,7 +210,7 @@ class vpnFresh():
         if saveType == "PPTP":
             return moudle_text % (VpnName, uuid, timestamp, serviceType, ip, self.username, self.pwd)
         else:
-            return moudle_text % (VpnName, uuid, timestamp, serviceType, ip, "123456", self.username, ip, self.pwd)
+            return moudle_text % (VpnName, uuid, timestamp, serviceType, ip, shareKey, self.username, ip, self.pwd)
 
 
     def delOldVpnfiles(self):
@@ -245,6 +254,22 @@ class vpnFresh():
         self.flushNetWorkManage()
         pass
 
+
+    def goFresh_20171021(self):
+        """主程序"""
+        # 获取新文件
+        self.getVpns(True, os.path.join(self.locfolder, 'vpn.txt'))
+        # 删除所有旧文件
+        self.delOldVpnfiles()
+        # 创建所有的PPTP协议的VPN账号（使用"PPTP_L2TP"下的IP）
+        # tmpdict = self.fullVpnIpDict()
+        tmplist = self.readVpnPagefile2list()[4:]
+        tmplist = [i.split('\t')[1] for i in tmplist]
+        tmpdict = {"PPTP_L2TP": tmplist}
+        self.createConfFiles(tmpdict,  ["PPTP_L2TP", "VPN_L2TP_%s", "L2TP"])
+        self.flushNetWorkManage()
+        pass
+
     def timestamp2time(self, timeStamp):
         timeStamp = timeStamp
         timeArray = time.localtime(timeStamp)
@@ -258,5 +283,6 @@ if __name__ == '__main__':
     vpn_host_pwd = sys.argv[3]
     # print vpn_username, vpn_pwd, vpn_host_pwd
     tmpobj = vpnFresh(vpn_username, vpn_pwd, vpn_host_pwd)
-    tmpobj.goFresh()
+    # tmpobj.goFresh()
+    tmpobj.goFresh_20171021()
     pass
